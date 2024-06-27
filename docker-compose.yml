@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  spark-master:
+    build: ./master
+    container_name: spark-master
+    ports:
+      - "8080:8080"  
+      - "7077:7077" 
+    volumes:
+      - ./data:/data
+
+  spark-worker:
+    build: ./worker
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"  
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+
+  jupyter:
+    image: jupyter/pyspark-notebook
+    container_name: jupyter-notebook
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/data
+    depends_on:
+      - spark-master
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYSPARK_PYTHON=python3
+      - SPARK_HOME=/usr/local/spark
+      - SPARK_URL=spark://spark-master:7077
